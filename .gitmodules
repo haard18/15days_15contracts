@@ -4,3 +4,6 @@
 [submodule "day3/lib/forge-std"]
 	path = day3/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "day4/lib/forge-std"]
+	path = day4/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
