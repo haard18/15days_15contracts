@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Interactor</title>
+</head>
+<body>
+    <h2>ERC20 Token Interface</h2>
+
+    <p><strong>Connected account:</strong> <span id="account">Not connected</span></p>
+
+    <button onclick="connectWallet()">Connect Wallet</button>
+
+    <h3>Token Info</h3>
+    <button onclick="getInfo()">Get Token Info</button>
+    <p id="info"></p>
+
+    <h3>Get Balance</h3>
+    <input type="text" id="balanceAddress" placeholder="Enter address">
+    <button onclick="getBalance()">Check Balance</button>
+    <p id="balance"></p>
+
+    <h3>Mint</h3>
+    <input type="text" id="mintTo" placeholder="To address">
+    <input type="number" id="mintAmount" placeholder="Amount">
+    <button onclick="mint()">Mint</button>
+
+    <h3>Burn</h3>
+    <input type="text" id="burnFrom" placeholder="From address">
+    <input type="number" id="burnAmount" placeholder="Amount">
+    <button onclick="burn()">Burn</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = "0x70A2cd08Ddfaf4F5881d7718Abd8Ec51B429B1Fb";
+        const abi = [
+            { "inputs": [], "name": "getInfo", "outputs": [ { "internalType": "string", "name": "", "type": "string" }, { "internalType": "string", "name": "", "type": "string" }, { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" },
+            { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "getBalance", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" },
+            { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [ { "internalType": "address", "name": "from", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "burn", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
+        ];
+
+        let web3;
+        let contract;
+        let currentAccount;
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: "eth_requestAccounts" });
+                const accounts = await web3.eth.getAccounts();
+                currentAccount = accounts[0];
+                document.getElementById("account").innerText = currentAccount;
+                contract = new web3.eth.Contract(abi, contractAddress);
+            } else {
+                alert("MetaMask not found. You living under a rock?");
+            }
+        }
+
+        async function getInfo() {
+            const info = await contract.methods.getInfo().call();
+            document.getElementById("info").innerText = `Name: ${info[0]}, Symbol: ${info[1]}, Total Supply: ${info[2]}`;
+        }
+
+        async function getBalance() {
+            const addr = document.getElementById("balanceAddress").value;
+            const bal = await contract.methods.getBalance(addr).call();
+            document.getElementById("balance").innerText = `Balance: ${bal}`;
+        }
+
+        async function mint() {
+            const to = document.getElementById("mintTo").value;
+            const amt = document.getElementById("mintAmount").value;
+            await contract.methods.mint(to, amt).send({ from: currentAccount });
+            alert("Minted successfully");
+        }
+
+        async function burn() {
+            const from = document.getElementById("burnFrom").value;
+            const amt = document.getElementById("burnAmount").value;
+            await contract.methods.burn(from, amt).send({ from: currentAccount });
+            alert("Burned successfully");
+        }
+    </script>
+</body>
+</html>
