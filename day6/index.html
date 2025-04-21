@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-yellow-100 text-gray-900">
+  <head>
+    <!-- 0xfe38223E791C5E6a1b098f249F989e79479849C6 -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buy Me A Coffee ☕</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .brutal {
+        border: 3px solid black;
+        box-shadow: 4px 4px 0 black;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col items-center p-6">
+    <div class="text-center brutal p-6 bg-white rounded-lg max-w-md w-full">
+      <h1 class="text-3xl font-bold mb-2">Buy Me A Coffee ☕</h1>
+      <p class="mb-4">Send a tip with a message to support my work!</p>
+
+      <input
+        id="name"
+        type="text"
+        placeholder="Your name"
+        class="brutal px-3 py-2 mb-2 w-full"
+      />
+      <textarea
+        id="message"
+        placeholder="Say something..."
+        class="brutal px-3 py-2 mb-2 w-full"
+      ></textarea>
+      <button
+        onclick="buyCoffee()"
+        class="brutal bg-yellow-300 px-4 py-2 font-bold"
+      >
+        Send 0.01 ETH
+      </button>
+      <div id="coffees" class="mt-6 w-full"></div>
+      <button
+        onclick="getCoffees()"
+        class="brutal bg-yellow-300 px-4 py-2 font-bold mt-4"
+      >
+        Get COffees
+      </button>
+      <button
+        onclick="getBalance()"
+        class="brutal bg-yellow-300 px-4 py-2 font-bold mt-4"
+      >
+
+        Get Balance
+      </button>
+      <button
+      onclick="withdraw() " class="brutal bg-yellow-300 px-4 py-2 font-bold mt-4">
+        
+        withdraw
+      </button>
+      <p id="status" class="mt-4 text-sm"></p>
+    </div>
+
+    <script>
+      const contractAddress = "0xfe38223E791C5E6a1b098f249F989e79479849C6";
+      const abi = [
+        {
+          inputs: [
+            { internalType: "string", name: "name", type: "string" },
+            { internalType: "address", name: "artistAddress", type: "address" },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          inputs: [],
+          name: "CannotBuyCoffee",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "NotArtist",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "from",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "message",
+              type: "string",
+            },
+          ],
+          name: "NewCoffe",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "to",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "Withdraw",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "artist",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "artistName",
+          outputs: [{ internalType: "string", name: "", type: "string" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+            "type": "function",
+            "name": "getAllCoffess",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "tuple[]",
+                    "internalType": "struct BuyMeCoffee.Coffeesbought[]",
+                    "components": [
+                        {
+                            "name": "name",
+                            "type": "string",
+                            "internalType": "string"
+                        },
+                        {
+                            "name": "message",
+                            "type": "string",
+                            "internalType": "string"
+                        }
+                    ]
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+          inputs: [],
+          name: "getBalance",
+          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "numberOfCoffees",
+          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "withdraw",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            { internalType: "string", name: "name", type: "string" },
+            { internalType: "string", name: "message", type: "string" },
+          ],
+          name: "buyCoffee",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+      ];
+
+      let web3, contract, account;
+
+      async function connectWallet() {
+        if (window.ethereum) {
+          web3 = new Web3(window.ethereum);
+          await ethereum.request({ method: "eth_requestAccounts" });
+          account = (await web3.eth.getAccounts())[0];
+          contract = new web3.eth.Contract(abi, contractAddress);
+        } else {
+          alert("Please install MetaMask!");
+        }
+      }
+
+      async function buyCoffee() {
+        const name = document.getElementById("name").value;
+        const message = document.getElementById("message").value;
+
+        try {
+          await contract.methods.buyCoffee(name, message).send({
+            from: account,
+            value: web3.utils.toWei("0.02", "ether"),
+          });
+
+          document.getElementById("status").innerText =
+            "Thanks for the coffee!";
+          getCoffees();
+        } catch (err) {
+          document.getElementById("status").innerText = "Transaction failed.";
+        }
+      }
+      async function getCoffees() {
+        const container = document.getElementById("coffees");
+        container.innerHTML = "<p class='text-sm'>Loading coffees...</p>";
+
+        try {
+          const coffees = await contract.methods.getAllCoffess().call();
+          if (coffees.length === 0) {
+            container.innerHTML =
+              "<p class='text-sm'>No coffees yet. Be the first!</p>";
+            return;
+          }
+
+          container.innerHTML = coffees
+            .map(
+              (coffee) => `
+        <div class="brutal p-3 my-2 bg-white rounded shadow-sm">
+          <p class="font-bold">${coffee.name}</p>
+          <p class="text-sm">${coffee.message}</p>
+        </div>
+      `
+            )
+            .join("");
+        } catch (err) {
+          container.innerHTML =
+            "<p class='text-sm text-red-500'>Failed to load coffees.</p>";
+          console.error(err);
+        }
+      }
+      async function getBalance() {
+        try {
+          const balance = await contract.methods.getBalance().call();
+          document.getElementById("balance").innerText =
+            "Contract balance: " + web3.utils.fromWei(balance, "ether") + " ETH";
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      async function withdraw(){
+
+        try {
+          await contract.methods.withdraw().call()
+          document.getElementById("status").innerText =
+            "Withdraw successful!";
+        } catch (err) {
+          document.getElementById("status").innerText =
+            "Withdraw failed. Please try again.";
+        }
+      }
+      connectWallet();
+    </script>
+  </body>
+</html>
