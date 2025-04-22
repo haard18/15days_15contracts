@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deploy Coffee Contract</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Tailwind CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Ethers -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <!-- Neo-Brutal CSS -->
+  <style>
+    body {
+      background-color: #fdf6e3;
+      font-family: 'Courier New', monospace;
+    }
+    .neo-card {
+      border: 4px solid black;
+      border-radius: 1.25rem;
+      background-color: #fff;
+      padding: 2rem;
+      box-shadow: 8px 8px 0 black;
+      transition: transform 0.1s ease-in-out;
+    }
+    .neo-card:hover {
+      transform: translateY(-2px);
+    }
+    input, button {
+      border: 2px solid black;
+      border-radius: 0.5rem;
+      background-color: #ffffff;
+      box-shadow: 4px 4px 0 black;
+    }
+    input:focus {
+      outline: none;
+      border-color: black;
+      box-shadow: 2px 2px 0 black;
+    }
+    button {
+      background-color: #ffcc00;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ffe066;
+      transform: scale(1.03);
+    }
+    h1 {
+      text-shadow: 2px 2px black;
+    }
+  </style>
+</head>
+<body class="p-10">
+  <div class="neo-card max-w-md mx-auto text-center">
+    <h1 class="text-4xl mb-4 font-normal">☕ Start Your Coffee Page</h1>
+    <input id="artistName" type="text" placeholder="Your name..." class="p-3 border mt-4 w-full text-lg">
+    <button onclick="connectWallet()" class="mt-6 w-full p-3 text-lg">🔌 Connect Wallet</button>
+    <button onclick="deployContract()" class="mt-4 w-full p-3 text-lg">🚀 Deploy Contract</button>
+    <p id="status" class="mt-4 text-md text-gray-700 font-mono"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
