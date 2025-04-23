@@ -1,0 +1,33 @@
+{
+    "name": "Virat Kohli in Your Wallet",
+    "description": "Virat Kohli Special Edition NFT — Own a moment of greatness.",
+    "image": "ipfs://QmV6nLogEMoEtRGFzn9zEVYU71GAv2dShqKKStP478UTNb",
+
+    "attributes": [
+      {
+        "trait_type": "Universe",
+        "value": "Cricketverse"
+      },
+      {
+        "trait_type": "Role",
+        "value": "King"
+      },
+      {
+        "trait_type": "Jersey Number",
+        "value": "18"
+      },
+      {
+        "trait_type": "Centuries",
+        "value": 77
+      },
+      {
+        "trait_type": "Era",
+        "value": "2008 to Present"
+      },
+      {
+        "trait_type": "Special Edition",
+        "value": "True"
+      }
+    ]
+  }
+//   Qme2fbeN9HpLt5UrWpmQ4nNQtDv2ZQ81N372PQwEzCpjKV
