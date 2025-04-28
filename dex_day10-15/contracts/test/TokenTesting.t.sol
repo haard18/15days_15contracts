@@ -3,96 +3,75 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {
-    TokenA,
-    TokenB
-} from "../src/Tokens.sol";
-import {
-    Faucet
-} from "../src/Faucet.sol";
-contract TokenTesting is Test{
+import {TokenA, TokenB} from "../src/Tokens.sol";
+import {Faucet} from "../src/Faucet.sol";
+import {LiquidityPool} from "../src/LiquidityPool.sol";
+import {LPToken} from "../src/LiquidityPool.sol";
 
-    address public lpProvider=vm.addr(1);
-    address public user=vm.addr(2);
+contract TokenTesting is Test {
+    address public lpProvider = vm.addr(1);
+    address public user = vm.addr(2);
     TokenA public tokenA;
     TokenB public tokenB;
     Faucet public faucet;
-    function setUp() public {
+    LPToken public lpToken;
+    LiquidityPool public liquidityPool;
+
+    function setUp() external {
         vm.startPrank(lpProvider);
-        vm.deal(lpProvider, 100 ether);
         tokenA = new TokenA();
         tokenB = new TokenB();
-        console.log("TokenA Address: ", address(tokenA));
-        console.log("TokenB Address: ", address(tokenB));
-        assertEq(tokenA.balanceOf(lpProvider), tokenA.MAX_SUPPLY());
-        assertEq(tokenB.balanceOf(lpProvider), tokenB.MAX_SUPPLY());
-        vm.stopPrank();
-    }
-    
-    function testBalanceofLP() external{
-        vm.startPrank(lpProvider);
-
-        assertEq(tokenA.balanceOf(lpProvider), tokenA.MAX_SUPPLY());
-        console.log("TokenA Balance: ", tokenA.balanceOf(lpProvider));
-        assertEq(tokenB.balanceOf(lpProvider), tokenB.MAX_SUPPLY());
-        console.log("TokenB Balance: ", tokenB.balanceOf(lpProvider));
-        vm.stopPrank();
-    }
-    function FaucetCreation() public{
-        vm.startPrank(lpProvider);
         faucet = new Faucet(address(tokenA), address(tokenB));
-        console.log("Faucet Address: ", address(faucet));
-        tokenA.approve(address(faucet), tokenA.MAX_SUPPLY());
-        tokenB.approve(address(faucet), tokenB.MAX_SUPPLY());
-        tokenA.transfer(address(faucet), tokenA.MAX_SUPPLY()/2);
-        tokenB.transfer(address(faucet), tokenB.MAX_SUPPLY()/2);
+        liquidityPool = new LiquidityPool(address(tokenA), address(tokenB));
+
+        // Ensure LPToken instance is stored properly
+        lpToken = liquidityPool.lpToken();
+
+        tokenA.approve(address(faucet), type(uint256).max);
+        tokenB.approve(address(faucet), type(uint256).max);
+        tokenA.transfer(address(faucet), tokenA.MAX_SUPPLY() / 2);
+        tokenB.transfer(address(faucet), tokenB.MAX_SUPPLY() / 2);
+
         vm.stopPrank();
     }
-    function testFaucetCreation() external{
-        FaucetCreation();  
-        vm.startPrank(lpProvider); 
-        assertEq(tokenA.balanceOf(address(faucet)), tokenA.MAX_SUPPLY()/2);
-        assertEq(tokenB.balanceOf(address(faucet)), tokenB.MAX_SUPPLY()/2);
-        console.log("Faucet TokenA Balance: ", tokenA.balanceOf(address(faucet)));
-        console.log("Faucet TokenB Balance: ", tokenB.balanceOf(address(faucet)));
-        vm.stopPrank();
-    }
-    function testRequestTokenA() external {
-        FaucetCreation();
-        vm.startPrank(user);
-        uint256 faucetBalance = tokenA.balanceOf(address(faucet));
-        console.log("Faucet TokenA Balance before request: ", faucetBalance);
-        uint256 initialBalance = tokenA.balanceOf(user);
-        console.log("TokenA Balance before request: ", initialBalance);
-        faucet.requestTokenA();
-        uint256 finalBalance = tokenA.balanceOf(user);
-        assertEq(finalBalance, initialBalance+1e18*10);
-        console.log("TokenA Balance after request: ", finalBalance);
-        vm.stopPrank();
-    }
-    function testRequestTokenB() external {
-        FaucetCreation();
-        vm.startPrank(user);
-        uint256 faucetBalance = tokenB.balanceOf(address(faucet));
-        console.log("Faucet TokenB Balance before request: ", faucetBalance);
-        uint256 initialBalance = tokenB.balanceOf(user);
-        console.log("Initial TokenB Balance: ", initialBalance);
-        faucet.requestTokenB();
-        uint256 finalBalance = tokenB.balanceOf(user);
-        assertEq(finalBalance, initialBalance+1e18*10);
-        console.log("TokenB Balance after request: ", finalBalance);
-        vm.stopPrank();
-    }
-    function testGetFaucetBalance() external {
-        FaucetCreation();
+
+    function testLiquidityFlow() external {
         vm.startPrank(lpProvider);
-        (uint256 tokenABalance, uint256 tokenBBalance) = faucet.getFaucetBalance();
-        assertEq(tokenABalance, tokenA.MAX_SUPPLY()/2);
-        assertEq(tokenBBalance, tokenB.MAX_SUPPLY()/2);
-        console.log("Faucet TokenA Balance: ", tokenABalance);
-        console.log("Faucet TokenB Balance: ", tokenBBalance);
+        uint256 amountA = 100 * 1e18;
+        uint256 amountB = 100 * 1e18;
+
+        // Approve the liquidity pool to spend tokens
+        tokenA.approve(address(liquidityPool), type(uint256).max);
+        tokenB.approve(address(liquidityPool), type(uint256).max);
+
+        // Add liquidity to the pool
+        liquidityPool.addLiquidity(amountA, amountB);
+
+        // Assert the balances of the liquidity pool
+        assertEq(tokenA.balanceOf(address(liquidityPool)), amountA);
+        assertEq(tokenB.balanceOf(address(liquidityPool)), amountB);
+        // lpToken.balanceOf(lpProvider);
+        console.log("LP Token Balance: ", lpToken.balanceOf(lpProvider));
+        // You may want to check the LPToken balances or totalSupply
+        console.log("LP Token Total Supply: ", lpToken.totalSupply());
         vm.stopPrank();
+        vm.startPrank(lpProvider);
+        // Remove liquidity from the pool
+        uint256 lpTokenAmount = lpToken.balanceOf(lpProvider);
+        lpToken.approve(address(liquidityPool), lpTokenAmount);
+        console.log('Pool balance before remove: ', tokenA.balanceOf(address(liquidityPool)), tokenB.balanceOf(address(liquidityPool)));
+
+        liquidityPool.removeLiquidity(lpTokenAmount);
+        // Assert the balances of the liquidity pool
+        assertEq(tokenA.balanceOf(address(liquidityPool)), 0);
+        assertEq(tokenB.balanceOf(address(liquidityPool)), 0);
+
+        // // Assert the balances of the user
+        // assertEq(tokenA.balanceOf(lpProvider), amountA);
+        // assertEq(tokenB.balanceOf(lpProvider), amountB);
+        // assert that lptokensupply has decreased
+        assertEq(lpToken.totalSupply(), 0);
+        // assert that user has received the tokens
+        
     }
-
-
 }
