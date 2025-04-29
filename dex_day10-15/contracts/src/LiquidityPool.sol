@@ -33,6 +33,30 @@ contract LiquidityPool {
 
     error InsufficientLiquidity();
     error AmountCannotBeZero();
+    event LiquidityAdded(
+        address indexed provider,
+        uint256 amountA,
+        uint256 amountB
+    );
+    event LiquidityRemoved(
+        address indexed provider,
+        uint256 amountA,
+        uint256 amountB
+    );
+    event SwappedAforB(
+        address indexed trader,
+        uint256 amountA,
+        uint256 amountB
+    );
+    event SwappedBforA(
+        address indexed trader,
+        uint256 amountB,
+        uint256 amountA
+    );
+
+    event ReservesUpdated(uint256 reserveA, uint256 reserveB);
+    event LPTokenMinted(address indexed to, uint256 amount);
+    event LPTokenBurned(address indexed from, uint256 amount);
 
     constructor(address _tokenA, address _tokenB) {
         tokenA = IERC20(_tokenA);
@@ -58,6 +82,10 @@ contract LiquidityPool {
             );
         }
         lpToken.mint(liquidity, msg.sender);
+        emit LiquidityAdded(msg.sender, amountA, amountB);
+        emit ReservesUpdated(reserveA, reserveB);
+        emit LPTokenMinted(msg.sender, liquidity);
+
     }
     function removeLiquidity(uint256 liquidity) external {
         if (liquidity == 0) {
@@ -70,6 +98,10 @@ contract LiquidityPool {
         lpToken.burn(liquidity, msg.sender);
         tokenA.transfer(msg.sender, amountA);
         tokenB.transfer(msg.sender, amountB);
+        emit LiquidityRemoved(msg.sender, amountA, amountB);
+        emit ReservesUpdated(reserveA, reserveB);
+        emit LPTokenBurned(msg.sender, liquidity);
+
     }
     function swapAforB(uint256 amountA) external {
         if (amountA == 0) {
@@ -84,6 +116,9 @@ contract LiquidityPool {
 
         tokenA.transferFrom(msg.sender, address(this), amountA);
         tokenB.transfer(msg.sender, amountB);
+        emit SwappedAforB(msg.sender, amountA, amountB);
+        emit ReservesUpdated(reserveA, reserveB);
+
     }
     // Swap Token B for Token A (with fee)
     function swapBforA(uint256 amountB) external {
@@ -98,7 +133,11 @@ contract LiquidityPool {
         reserveA -= amountA;
 
         tokenB.transferFrom(msg.sender, address(this), amountB);
+        
         tokenA.transfer(msg.sender, amountA);
+        emit SwappedBforA(msg.sender, amountB, amountA);
+        emit ReservesUpdated(reserveA, reserveB);
+
     }
     function getReserves() external view returns (uint256, uint256) {
         return (reserveA, reserveB);
