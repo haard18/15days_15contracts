@@ -5,6 +5,8 @@ import cors from 'cors';
 import { connectToRabbitMQ } from './lib/rabbitmq.js';
 import { startLiquidityListener, startSwapListener } from './listeners/pool.js';
 import { startFaucetListener } from './listeners/faucet.js';
+import { startLiquidityConsumer, startSwapConsumer } from './consumers/poolC.js';
+import { server } from './lib/socket.js';
 
 dotenv.config();
 
@@ -26,4 +28,10 @@ app.listen(3000, () => {
     console.log("Liquidity listener started"); // Will never reach here
     await startFaucetListener(); // Keep the process alive
     console.log("Faucet listener started"); // Will never reach here
+    await startLiquidityConsumer(); // Keep the process alive
+    console.log("Liquidity consumer started"); // Will never reach here
+    await startSwapConsumer(); // Keep the process alive
+    server.listen(5002, () => console.log('Server running on port 5002'));
+    console.log("socket server started"); // Will never reach here
+
 })();

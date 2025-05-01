@@ -68,7 +68,7 @@ const Faucet = () => {
       const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
 
       // const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const signer = await provider.getSigner();  
       const faucetContract = new ethers.Contract(faucetAddress, faucetABI, signer);
       const balances = await faucetContract.getFaucetBalance();
       setBalanceA(balances[0].toString());

@@ -85,7 +85,6 @@ contract LiquidityPool {
         emit LiquidityAdded(msg.sender, amountA, amountB);
         emit ReservesUpdated(reserveA, reserveB);
         emit LPTokenMinted(msg.sender, liquidity);
-
     }
     function removeLiquidity(uint256 liquidity) external {
         if (liquidity == 0) {
@@ -101,7 +100,6 @@ contract LiquidityPool {
         emit LiquidityRemoved(msg.sender, amountA, amountB);
         emit ReservesUpdated(reserveA, reserveB);
         emit LPTokenBurned(msg.sender, liquidity);
-
     }
     function swapAforB(uint256 amountA) external {
         if (amountA == 0) {
@@ -111,14 +109,12 @@ contract LiquidityPool {
         uint256 amountAWithFee = (amountA * FEE) / 1000;
         uint256 amountB = (amountAWithFee * reserveB) / reserveA;
 
-        reserveA += amountAWithFee;
-        reserveB -= amountB;
-
         tokenA.transferFrom(msg.sender, address(this), amountA);
         tokenB.transfer(msg.sender, amountB);
+        reserveA += amountAWithFee;
+        reserveB -= amountB;
         emit SwappedAforB(msg.sender, amountA, amountB);
         emit ReservesUpdated(reserveA, reserveB);
-
     }
     // Swap Token B for Token A (with fee)
     function swapBforA(uint256 amountB) external {
@@ -129,16 +125,18 @@ contract LiquidityPool {
         uint256 amountBWithFee = (amountB * FEE) / 1000;
         uint256 amountA = (amountBWithFee * reserveA) / reserveB;
 
+        tokenB.transferFrom(msg.sender, address(this), amountB);
+
+        tokenA.transfer(msg.sender, amountA);
         reserveB += amountBWithFee;
         reserveA -= amountA;
-
-        tokenB.transferFrom(msg.sender, address(this), amountB);
-        
-        tokenA.transfer(msg.sender, amountA);
         emit SwappedBforA(msg.sender, amountB, amountA);
         emit ReservesUpdated(reserveA, reserveB);
-
     }
+    function getLPTokenBalance(address user) external view returns (uint256) {
+        return lpToken.balanceOf(user);
+    }
+
     function getReserves() external view returns (uint256, uint256) {
         return (reserveA, reserveB);
     }
